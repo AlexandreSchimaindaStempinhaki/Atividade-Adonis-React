@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Após clonar o projeto: 
 
 1) Dentro da pasta Adonis-back, executar:
@@ -15,3 +16,6 @@ Após clonar o projeto:
     npm install
     
     npm run start
+=======
+# Atividade-Adonis-React
+>>>>>>> 35b5700e854175831b66704340e3c02025261a1c
