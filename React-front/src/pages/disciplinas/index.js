@@ -25,9 +25,14 @@ export default function Home() {
         setTimeout(() => {
     
             Client.get('disciplinas').then(res => {
-                const disciplinas = res.data
+                const disciplinas = res.data.data
                 console.log(disciplinas)
-                setData(disciplinas.data)
+
+                const mapped = disciplinas.map(a => ({
+                    ...a,
+                    cursoNome: a.curso.nome
+                }))
+                setData(mapped)
             })
             .catch(function(error) {
                 console.log(error)
@@ -66,10 +71,10 @@ export default function Home() {
                 <Container className='mt-2'>
                     <DataTable 
                         title="Disciplinas Registradas" 
-                        rows={['Nome', 'Carga Horária (aulas)', 'Ações']}
+                        rows={['Nome', 'Carga Horária (aulas)', 'Curso', 'Ações']}
                         hide={[false, true, false]}
                         data={data}
-                        keys={['nome', 'carga']}
+                        keys={['nome', 'carga', 'cursoNome']}
                         resource='disciplinas'
                         crud={['viewCurso', 'createCurso', 'editCurso', 'deleteCurso']}
                     />
