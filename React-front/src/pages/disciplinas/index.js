@@ -72,7 +72,7 @@ export default function Home() {
                     <DataTable 
                         title="Disciplinas Registradas" 
                         rows={['Nome', 'Carga Horária (aulas)', 'Curso', 'Ações']}
-                        hide={[false, true, false]}
+                        hide={[false, true, true, false]}
                         data={data}
                         keys={['nome', 'carga', 'cursoNome']}
                         resource='disciplinas'
