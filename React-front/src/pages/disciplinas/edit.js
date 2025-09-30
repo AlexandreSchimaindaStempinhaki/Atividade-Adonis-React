@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { Container, Modal, Button } from 'react-bootstrap';
 import { OrbitProgress } from "react-loading-indicators";
 import NavigationBar from '../../components/navigationbar';
-import { 
+import {
     Label,
     Input,
     Select,
@@ -19,9 +19,11 @@ export default function Edit() {
 
     const location = useLocation();
     const disciplina = location.state?.item;
-    
+
     const [name, setName] = useState(disciplina.nome)
     const [classHour, setClassHour] = useState(disciplina.carga)
+    const [courses, setCourses] = useState([])
+    const [courseId, setCourseId] = useState('')
     const [load, setLoad] = useState(true)
     const [course, setCourse] = useState(disciplina.curso_id)
     const [data, setData] = useState([])
@@ -29,24 +31,24 @@ export default function Edit() {
     const navigate = useNavigate();
     // const { user } = useContext(UserContext);
     const permissions = getPermissions()
-    const dataUser  = getDataUser()
+    const dataUser = getDataUser()
 
     function fetchData() {
-    
-        setLoad(true) 
+
+        setLoad(true)
         setTimeout(() => {
-    
+
             Client.get('disciplinas/create').then(res => {
                 const cursos = res.data
                 console.log(cursos)
                 setData(cursos.data)
             })
-            .catch(function(error) {
-                console.log(error)
-            })
-            .finally( () => {
-                setLoad(false)
-            })
+                .catch(function (error) {
+                    console.log(error)
+                })
+                .finally(() => {
+                    setLoad(false)
+                })
 
         }, 1000)
     }
@@ -54,13 +56,13 @@ export default function Edit() {
     function updateDisciplina() {
 
         const upDisciplina = { nome: name, carga: classHour, curso_id: course }
-        
+
         Client.put("disciplinas/" + disciplina.id, upDisciplina).then(response => {
             setShow(true);
         })
-        .catch(error => {
-            console.error(error);
-        });
+            .catch(error => {
+                console.error(error);
+            });
     }
 
     const handleClose = () => {
@@ -70,63 +72,73 @@ export default function Edit() {
 
     function verifyPermission() {
         // Não Autenticado   
-        if(!dataUser) navigate('/login')
+        if (!dataUser) navigate('/login')
         // Não Autorizado (rota anterior)
-        else if(permissions.editDisciplina === 0) navigate(-1)
+        else if (permissions.editDisciplina === 0) navigate(-1)
     }
-    
+
     useEffect(() => {
         verifyPermission()
         fetchData()
     }, []);
 
+    useEffect(() => {
+        Client.get('cursos')
+            .then(res => {
+                const cursos = res.data.data
+                setCourses(cursos)
+
+                if(disciplina?.curso?.id) {
+                    setCourseId(String(disciplina.curso.id))
+                }
+            })
+            .catch(err => console.log(err))
+    }, [disciplina])
+
     return (
         <>
             <NavigationBar />
             {
-                load 
-                ?
+                load
+                    ?
                     <Container className="d-flex justify-content-center mt-5">
                         <OrbitProgress variant="spokes" color="#32cd32" size="medium" text="" textColor="" />
                     </Container>
-                :
-                <Container className='mt-2'>
-                    <Label>Nome</Label>
-                    <Input
-                        type="text" 
-                        id="name" 
-                        name="name" 
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                    <Label>Carga Horária (nr. aulas)</Label>
-                    <Input
-                        type="number" 
-                        id="class" 
-                        name="class" 
-                        value={classHour}
-                        onChange={(e) => setClassHour(e.target.value)}
-                    />
-                    <Label>Curso</Label>
-                    <Select name="course" id="course" onChange={(e) => setCourse(e.target.value)}>
-                        {
-                            data.map((element, index) => (
-                                element.id == disciplina.curso_id
-                                ?
-                                    <option key={index} value={element.id} selected>
-                                        {element.nome}
-                                    </option>
-                                :
-                                    <option key={index} value={element.id}>
-                                        {element.nome}
-                                    </option>
-                            ))
-                        }
-                    </Select>
+                    :
+                    <Container className='mt-2'>
+                        <Label>Nome</Label>
+                        <Input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                        <Label>Carga Horária (nr. aulas)</Label>
+                        <Input
+                            type="number"
+                            id="class"
+                            name="class"
+                            value={classHour}
+                            onChange={(e) => setClassHour(e.target.value)}
+                        />
+                        <Label>Curso</Label>
+                        <Select
+                            name="course"
+                            id="course"
+                            value={courseId}
+                            onChange={(e) => setCourseId(e.target.value)}
+                        >
+                            {courses.map((c) => (
+                                <option key={c.id} value={String(c.id)}>
+                                    {c.nome}
+                                </option>
+                            ))}
+                        </Select>
 
-                    <Submit value="Voltar" onClick={() => navigate('/disciplinas')  }/>
-                    <Submit value="Alterar" onClick={() => updateDisciplina() }/>
-                </Container>
+                        <Submit value="Voltar" onClick={() => navigate('/disciplinas')} />
+                        <Submit value="Alterar" onClick={() => updateDisciplina()} />
+                    </Container>
             }
             <Modal
                 show={show}
@@ -142,9 +154,9 @@ export default function Edit() {
                     <Button variant="primary" onClick={handleClose}>OK</Button>
                 </Modal.Footer>
             </Modal>
-            
+
         </>
 
     )
-    
+
 }
