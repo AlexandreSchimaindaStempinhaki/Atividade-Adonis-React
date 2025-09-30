@@ -18,12 +18,20 @@ export default function DataTable(props) {
 
   function remove(item) {
 
-    const url = `${props.resource}/${item.id}`
+    let url;
+
+    if(props.resource === 'matriculas'){
+        url = `${props.resource}/${item.aluno.id}/${item.disciplina.id}`
+    } else{
+        url = `${props.resource}/${item.id}`
+    }
+
     Client.delete(url).then(response => {
-      setShow(true);
+      setShow({sucess: true, message: 'Operação Efetuda com Sucesso!!'});
     })
     .catch(error => {
       console.error(error);
+      setShow({succes: false, message: 'Não é possível apagar este registro, apague primeiro os dados relacionados'})
     });
   }
 
@@ -163,9 +171,9 @@ export default function DataTable(props) {
           keyboard={false}
       >
           <Modal.Header closeButton>
-              <Modal.Title>Remoção - Usuário</Modal.Title>
+              <Modal.Title>Remoção - {show?.sucess ? 'Sucesso' : 'Erro'}</Modal.Title>
           </Modal.Header>
-          <Modal.Body>Operação Efetuda com Sucesso!!</Modal.Body>
+          <Modal.Body>{show?.message}</Modal.Body>
           <Modal.Footer>
               <Button variant="primary" onClick={handleClose}>OK</Button>
           </Modal.Footer>
