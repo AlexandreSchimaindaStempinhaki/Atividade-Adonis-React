@@ -1,9 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Disciplina from '#models/disciplina'
-import Curso from '#models/curso'
 import { createDisciplina, updateDisciplina } from '#validators/disciplina'
 import DisciplinaPolicy from '#policies/disciplina_policy'
-import logger from '@adonisjs/core/services/logger'
+import { DisciplinaPayload, DisciplinaService } from '#services/disciplina_service'
+
+type UpdateDisciplinaPayload = {
+  nome?: string
+  curso_id?: number
+  carga?: number
+}
 
 export default class DisciplinasController {
   /**
@@ -19,8 +23,7 @@ export default class DisciplinasController {
       }
 
       // const disciplinas = await Disciplina.all()
-      const disciplinas = await Disciplina.query().preload('curso').preload('alunos')
-      logger.info(disciplinas)
+      const disciplinas = await DisciplinaService.list()
 
       return response.status(200).json({
         message: 'OK',
@@ -45,7 +48,7 @@ export default class DisciplinasController {
         return response.forbidden({ message: 'Você não tem permissão para criar disciplina' })
       }
 
-      const cursos = await Curso.all()
+      const cursos = await DisciplinaService.cursos()
 
       return response.status(200).json({
         message: 'OK',
@@ -71,9 +74,7 @@ export default class DisciplinasController {
         return response.forbidden({ message: 'Você não tem permissão para criar disciplina' })
       }
 
-      const disciplina = await Disciplina.create({
-        ...payload,
-      })
+      const disciplina = await DisciplinaService.create(payload)
       return response.status(201).json({
         message: 'OK',
         data: disciplina,
@@ -94,15 +95,12 @@ export default class DisciplinasController {
       const user = auth.getUserOrFail()
       // Verificar se o usuário pode listar posts
       if (await bouncer.with(DisciplinaPolicy).denies('view')) {
-        return response.forbidden({ message: 'Você não tem permissão para criar disciplina' })
+        return response.forbidden({ message: 'Você não tem permissão para ver disciplina' })
       }
 
       // const disciplina = await Disciplina.findOrFail(params.id)
-      const disciplina = await Disciplina.query().where('id', params.id).preload('curso').preload('alunos').firstOrFail();
-      return response.status(200).json({
-        message: 'OK',
-        data: disciplina,
-      })
+      const disciplina = await DisciplinaService.findById(params.id)
+      return response.status(200).json({ message: 'OK', data: disciplina })
     } catch (error) {
       return response.status(500).json({
         message: 'ERROR',
@@ -122,7 +120,7 @@ export default class DisciplinasController {
         return response.forbidden({ message: 'Você não tem permissão para alterar disciplina' })
       }
 
-      const cursos = await Curso.all()
+      const cursos = await DisciplinaService.cursos()
 
       return response.status(200).json({
         message: 'OK',
@@ -139,7 +137,7 @@ export default class DisciplinasController {
    * Handle form submission for the edit action
    */
   async update({ params, request, response, auth, bouncer }: HttpContext) {
-    const payload = await request.validateUsing(updateDisciplina)
+    const payload: UpdateDisciplinaPayload = await request.validateUsing(updateDisciplina)
     try {
       // Usuário Autenticado
       const user = auth.getUserOrFail()
@@ -148,8 +146,7 @@ export default class DisciplinasController {
         return response.forbidden({ message: 'Você não tem permissão para alterar disciplina' })
       }
 
-      const disciplina = await Disciplina.findOrFail(params.id)
-      await disciplina.merge({ ...payload }).save()
+      const disciplina = await DisciplinaService.update(params.id, payload)
 
       return response.status(200).json({
         message: 'OK',
@@ -174,8 +171,7 @@ export default class DisciplinasController {
         return response.forbidden({ message: 'Você não tem permissão para remover disciplina' })
       }
 
-      const disciplina = await Disciplina.findOrFail(params.id)
-      await disciplina.delete()
+      await DisciplinaService.delete(params.id)
 
       return response.status(200).json({
         message: 'OK',

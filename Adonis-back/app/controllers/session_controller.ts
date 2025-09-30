@@ -3,7 +3,6 @@ import User from '#models/user'
 
 export default class SessionController {
   async store({ request, auth, response }: HttpContext) {
-
     // Obtém as credenciais do corpo da requisição
     const { email, password } = request.only(['email', 'password'])
     // Verifica as credencias - Efetua Login

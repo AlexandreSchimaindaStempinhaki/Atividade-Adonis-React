@@ -1,147 +1,78 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Curso from '#models/curso'
-import { createCurso, updateCurso } from '#validators/curso'
+import CursoService from '#services/curso_service'
 import CursoPolicy from '#policies/curso_policy'
-import logger from '@adonisjs/core/services/logger'
+import { createCurso, updateCurso } from '#validators/curso'
 
 export default class CursosController {
-  /**
-   * Display a list of resource
-   */
   async index({ auth, bouncer, response }: HttpContext) {
+    const user = await auth.getUserOrFail()
+    if (await bouncer.with(CursoPolicy).denies('list')) {
+      return response.forbidden({ message: 'Sem permissão' })
+    }
+
     try {
-      // Usuário Autenticado
-      const user = auth.getUserOrFail()
-      // Verificar se o usuário pode listar posts
-      if (await bouncer.with(CursoPolicy).denies('list')) {
-        return response.forbidden({ message: 'Você não tem permissão para listar curso' })
-      }
-
-      // const cursos = await Curso.all()
-      const cursos = await Curso.query().preload('disciplinas').preload('alunos')
-
-      return response.status(200).json({
-        message: 'OK',
-        data: cursos,
-      })
+      const cursos = await CursoService.list()
+      return response.ok({ message: 'OK', data: cursos })
     } catch (error) {
-      return response.status(500).json({
-        message: 'ERROR',
-      })
+      return response.internalServerError({ message: 'ERROR' })
     }
   }
 
-  /**
-   * Display form to create a new record
-   */
-  async create({}: HttpContext) {}
+  async show({ params, auth, bouncer, response }: HttpContext) {
+    const user = await auth.getUserOrFail()
+    if (await bouncer.with(CursoPolicy).denies('view')) {
+      return response.forbidden({ message: 'Sem permissão' })
+    }
 
-  /**
-   * Handle form submission for the create action
-   */
-  async store({ auth, bouncer, request, response }: HttpContext) {
+    try {
+      const curso = await CursoService.get(params.id)
+      return response.ok({ message: 'OK', data: curso })
+    } catch (error) {
+      return response.internalServerError({ message: 'ERROR' })
+    }
+  }
+
+  async store({ request, auth, bouncer, response }: HttpContext) {
     const payload = await request.validateUsing(createCurso)
-    try {
-      // Usuário Autenticado
-      const user = auth.getUserOrFail()
-      // Verificar se o usuário pode listar posts
-      if (await bouncer.with(CursoPolicy).denies('create')) {
-        return response.forbidden({ message: 'Você não tem permissão para criar curso' })
-      }
+    const user = await auth.getUserOrFail()
+    if (await bouncer.with(CursoPolicy).denies('create')) {
+      return response.forbidden({ message: 'Sem permissão' })
+    }
 
-      const curso = await Curso.create({
-        ...payload,
-      })
-      return response.status(201).json({
-        message: 'OK',
-        data: curso,
-      })
+    try {
+      const curso = await CursoService.create(payload)
+      return response.created({ message: 'OK', data: curso })
     } catch (error) {
-      return response.status(500).json({
-        message: 'ERROR',
-      })
+      return response.internalServerError({ message: 'ERROR' })
     }
   }
 
-  /**
-   * Show individual record
-   */
-  async show({ auth, bouncer, params, response }: HttpContext) {
-    try {
-      // Usuário Autenticado
-      const user = auth.getUserOrFail()
-      // Verificar se o usuário pode listar posts
-      if (await bouncer.with(CursoPolicy).denies('view')) {
-        return response.forbidden({ message: 'Você não tem permissão para ver curso' })
-      }
-
-      // const curso = await Curso.findOrFail(params.id)
-      const curso = await Curso.query().where('id', params.id).preload('disciplinas').preload('alunos').firstOrFail();
-      return response.status(200).json({
-        message: 'OK',
-        data: curso,
-      })
-    } catch (error) {
-      return response.status(500).json({
-        message: 'ERROR',
-      })
-    }
-  }
-
-  /**
-   * Edit individual record
-   */
-  async edit({ params }: HttpContext) {}
-
-  /**
-   * Handle form submission for the edit action
-   */
-  async update({ auth, bouncer, params, request, response }: HttpContext) {
+  async update({ params, request, auth, bouncer, response }: HttpContext) {
     const payload = await request.validateUsing(updateCurso)
+    const user = await auth.getUserOrFail()
+    if (await bouncer.with(CursoPolicy).denies('edit')) {
+      return response.forbidden({ message: 'Sem permissão' })
+    }
+
     try {
-      // Usuário Autenticado
-      const user = auth.getUserOrFail()
-      // Verificar se o usuário pode listar posts
-      if (await bouncer.with(CursoPolicy).denies('edit')) {
-        return response.forbidden({ message: 'Você não tem permissão para alterar curso' })
-      }
-
-      const curso = await Curso.findOrFail(params.id)
-      await curso.merge({ ...payload }).save()
-
-      return response.status(200).json({
-        message: 'OK',
-        data: curso,
-      })
+      const curso = await CursoService.update(params.id, payload)
+      return response.ok({ message: 'OK', data: curso })
     } catch (error) {
-      return response.status(500).json({
-        message: 'ERROR',
-      })
+      return response.internalServerError({ message: 'ERROR' })
     }
   }
 
-  /**
-   * Delete record
-   */
-  async destroy({ auth, bouncer, params, response }: HttpContext) {
+  async destroy({ params, auth, bouncer, response }: HttpContext) {
+    const user = await auth.getUserOrFail()
+    if (await bouncer.with(CursoPolicy).denies('delete')) {
+      return response.forbidden({ message: 'Sem permissão' })
+    }
+
     try {
-      // Usuário Autenticado
-      const user = auth.getUserOrFail()
-      // Verificar se o usuário pode listar posts
-      if (await bouncer.with(CursoPolicy).denies('delete')) {
-        return response.forbidden({ message: 'Você não tem permissão para remover curso' })
-      }
-
-      const curso = await Curso.findOrFail(params.id)
-      await curso.delete()
-
-      return response.status(200).json({
-        message: 'OK',
-      })
+      await CursoService.delete(params.id)
+      return response.ok({ message: 'OK' })
     } catch (error) {
-      return response.status(500).json({
-        message: 'ERROR',
-      })
+      return response.internalServerError({ message: 'ERROR' })
     }
   }
 }

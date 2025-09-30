@@ -136,14 +136,14 @@ export default class AuthController {
       const tokens = await User.accessTokens.all(user)
 
       return response.ok({
-        tokens: tokens.map(token => ({
+        tokens: tokens.map((token) => ({
           name: token.name,
           type: token.type,
           abilities: token.abilities,
           lastUsedAt: token.lastUsedAt,
           expiresAt: token.expiresAt,
           createdAt: token.createdAt,
-        }))
+        })),
       })
     } catch (error) {
       return response.unauthorized({
